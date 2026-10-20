@@ -38,6 +38,8 @@ htmlcov/
 *.ckpt
 *.joblib
 *.safetensors
+!result/best_gb_model.joblib
+!result/best_gb_scaler.joblib
 
 # Logs and temporary files
 *.log
