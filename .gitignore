@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
+# Packaging and test artifacts
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Machine-learning model artifacts
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.joblib
+*.safetensors
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
