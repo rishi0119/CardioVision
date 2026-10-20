@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 import math
+import os
+import secrets
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 
 import joblib
 import pandas as pd
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask_login import LoginManager, current_user, login_user, logout_user
+from flask_wtf.csrf import CSRFError, CSRFProtect
+from sqlalchemy import select
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from models import PredictionHistory, User, db
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+INSTANCE_DIR = PROJECT_ROOT / "instance"
+INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_PATH = PROJECT_ROOT / "result" / "best_gb_model.joblib"
 SCALER_PATH = PROJECT_ROOT / "result" / "best_gb_scaler.joblib"
 FEATURE_NAMES = ["age_years", "sex", "chol", "glucose/fbs", "MAP", "smoke"]
@@ -30,6 +41,51 @@ app = Flask(
     template_folder=str(Path(__file__).resolve().parent / "templates"),
     static_folder=str(Path(__file__).resolve().parent / "static"),
 )
+database_url = os.environ.get("CARDIOVISION_DATABASE_URL")
+if not database_url:
+    database_url = f"sqlite:///{(INSTANCE_DIR / 'cardiovision.db').as_posix()}"
+
+secret_key = os.environ.get("SECRET_KEY")
+if os.environ.get("RENDER", "").lower() == "true" and not secret_key:
+    raise RuntimeError("Set the SECRET_KEY environment variable in Render before starting CardioVision.")
+
+app.config.update(
+    SECRET_KEY=secret_key or secrets.token_hex(32),
+    SQLALCHEMY_DATABASE_URI=database_url,
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("RENDER", "").lower() == "true",
+)
+db.init_app(app)
+login_manager = LoginManager(app)
+csrf = CSRFProtect(app)
+
+
+@login_manager.user_loader
+def load_user(user_id: str) -> User | None:
+    try:
+        return db.session.get(User, int(user_id))
+    except ValueError:
+        return None
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "authentication_required"}), 401
+    return redirect(url_for("index"))
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error: CSRFError):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "csrf_failed", "message": error.description}), 400
+    return error.description, 400
+
+
+with app.app_context():
+    db.create_all()
 
 
 def load_model_artifacts() -> tuple[Any, Any]:
@@ -106,6 +162,124 @@ def index():
     return render_template("index.html")
 
 
+def api_payload() -> dict[str, Any] | None:
+    payload = request.get_json(silent=True)
+    return payload if isinstance(payload, dict) else None
+
+
+def public_user(user: User) -> dict[str, Any]:
+    return {"id": user.id, "username": user.username, "email": user.email}
+
+
+@app.post("/api/register")
+def register():
+    payload = api_payload()
+    if payload is None:
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    username = payload.get("username")
+    email = payload.get("email")
+    password = payload.get("password")
+    if not all(isinstance(value, str) for value in (username, email, password)):
+        return jsonify({"error": "Username, email, and password are required."}), 400
+
+    username = username.strip()
+    email = email.strip().lower()
+    if not 2 <= len(username) <= 80:
+        return jsonify({"error": "Username must be between 2 and 80 characters."}), 400
+    if len(email) > 254 or "@" not in email or any(character.isspace() for character in email):
+        return jsonify({"error": "Enter a valid email address."}), 400
+    if not 8 <= len(password) <= 128:
+        return jsonify({"error": "Password must be between 8 and 128 characters."}), 400
+
+    existing_user = db.session.execute(
+        select(User).where((User.username == username) | (User.email == email))
+    ).scalar_one_or_none()
+    if existing_user:
+        return jsonify({"error": "Username or email is already registered."}), 409
+
+    user = User(
+        username=username,
+        email=email,
+        password_hash=generate_password_hash(password),
+    )
+    db.session.add(user)
+    db.session.commit()
+    login_user(user)
+    return jsonify({"user": public_user(user)}), 201
+
+
+@app.post("/api/login")
+def login():
+    payload = api_payload()
+    if payload is None:
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+    email = payload.get("email")
+    password = payload.get("password")
+    if not isinstance(email, str) or not isinstance(password, str):
+        return jsonify({"error": "Email and password are required."}), 400
+
+    user = db.session.execute(
+        select(User).where(User.email == email.strip().lower())
+    ).scalar_one_or_none()
+    if user is None or not check_password_hash(user.password_hash, password):
+        return jsonify({"error": "Invalid email or password."}), 401
+    login_user(user)
+    return jsonify({"user": public_user(user)})
+
+
+@app.post("/api/logout")
+def logout():
+    logout_user()
+    return jsonify({"authenticated": False})
+
+
+@app.get("/api/user")
+def get_current_user():
+    if not current_user.is_authenticated:
+        return jsonify({"authenticated": False})
+    return jsonify({"authenticated": True, "user": public_user(current_user)})
+
+
+@app.get("/api/history")
+def get_history():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "authentication_required"}), 401
+    records = db.session.execute(
+        select(PredictionHistory)
+        .where(PredictionHistory.user_id == current_user.id)
+        .order_by(PredictionHistory.created_at.desc())
+        .limit(100)
+    ).scalars()
+    return jsonify(
+        {
+            "history": [
+                {
+                    "id": record.id,
+                    "age": record.age,
+                    "sex": record.sex,
+                    "sys_bp": record.sys_bp,
+                    "dia_bp": record.dia_bp,
+                    "map_val": record.map_val,
+                    "chol": record.chol,
+                    "glucose": record.glucose,
+                    "smoke": record.smoke,
+                    "risk_probability": record.risk_probability,
+                    "risk_tier": record.risk_tier,
+                    "created_at": (
+                        record.created_at.replace(tzinfo=timezone.utc)
+                        if record.created_at.tzinfo is None
+                        else record.created_at
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                }
+                for record in records
+            ]
+        }
+    )
+
+
 @app.post("/api/predict")
 def predict():
     if not request.is_json:
@@ -133,6 +307,23 @@ def predict():
     probability = float(MODEL.predict_proba(scaled_features)[0, 1])
     tier, tier_description = risk_category(probability)
     advice = clinical_advice(map_value, values["sysBP"], values["diaBP"], tier)
+    if current_user.is_authenticated:
+        db.session.add(
+            PredictionHistory(
+                user_id=current_user.id,
+                age=int(values["age_years"]),
+                sex=int(values["sex"]),
+                sys_bp=int(values["sysBP"]),
+                dia_bp=int(values["diaBP"]),
+                map_val=map_value,
+                chol=int(values["chol"]),
+                glucose=int(values["glucose"]),
+                smoke=int(values["smoke"]),
+                risk_probability=probability,
+                risk_tier=tier,
+            )
+        )
+        db.session.commit()
     return jsonify(
         {
             "probability": probability,

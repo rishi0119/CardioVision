@@ -8,6 +8,7 @@ venv/
 .venv/
 env/
 .env/
+instance/
 
 # Environment variables and local secrets
 .env
@@ -38,8 +39,8 @@ htmlcov/
 *.ckpt
 *.joblib
 *.safetensors
-!result/best_gb_model.joblib
-!result/best_gb_scaler.joblib
+!result/*.pkl
+!result/*.joblib
 
 # Logs and temporary files
 *.log

@@ -1,10 +1,10 @@
 Flask
+Flask-Login
+Flask-SQLAlchemy
+Flask-WTF
+SQLAlchemy
 gunicorn
-ipython
 joblib
-jupyter
-matplotlib
-numpy
 pandas
 scikit-learn==1.6.1
-seaborn
+Werkzeug

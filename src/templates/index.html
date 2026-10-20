@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050814">
   <meta name="description" content="CardioVision academic cardiovascular risk demonstration.">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>CardioVision | Clinical Intelligence</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -25,101 +26,117 @@
         </span>
         <span class="brand-name">CARDIO<span>VISION</span></span>
       </a>
-      <div class="system-status"><span class="status-dot"></span> MODEL SYSTEM <b>ONLINE</b></div>
+      <nav class="account-nav" aria-label="Main navigation">
+        <a href="/" data-i18n="navHome">Home</a>
+        <label class="language-picker">
+          <span data-i18n="languageLabel">Language</span>
+          <select id="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="te">తెలుగు</option>
+            <option value="hi">हिन्दी</option>
+          </select>
+        </label>
+        <span id="welcome-message" class="welcome-message" hidden></span>
+        <button id="history-button" class="nav-button" type="button" data-i18n="navHistory" hidden>My Health Log</button>
+        <button id="login-button" class="nav-button" type="button" data-i18n="navLogin">Login</button>
+        <button id="register-button" class="nav-button primary" type="button" data-i18n="navRegister">Register</button>
+        <button id="logout-button" class="nav-button" type="button" data-i18n="navLogout" hidden>Logout</button>
+        <div class="system-status"><span class="status-dot"></span> <span data-i18n="systemOnline">MODEL SYSTEM ONLINE</span></div>
+      </nav>
     </header>
 
     <section class="hero">
-      <div class="eyebrow"><span class="eyebrow-line"></span> CARDIOVASCULAR INTELLIGENCE <span class="eyebrow-line"></span></div>
-      <h1>Clinical insight,<br><span>illuminated.</span></h1>
-      <p>A data-informed view of cardiovascular indicators, built to support a thoughtful conversation with your clinician.</p>
+      <div class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="eyebrow">CARDIOVASCULAR INTELLIGENCE</span> <span class="eyebrow-line"></span></div>
+      <h1><span data-i18n="heroTitle">Clinical insight, illuminated.</span></h1>
+      <p data-i18n="heroDescription">A data-informed view of cardiovascular indicators, built to support a thoughtful conversation with your clinician.</p>
     </section>
 
     <section class="dashboard" aria-label="CardioVision risk assessment dashboard">
       <section class="glass-panel input-panel">
         <div class="panel-heading">
           <div>
-            <div class="panel-kicker">01 / PATIENT PROFILE</div>
-            <h2>Clinical parameters</h2>
+            <div class="panel-kicker" data-i18n="patientProfile">01 / PATIENT PROFILE</div>
+            <h2 data-i18n="clinicalParameters">Clinical parameters</h2>
           </div>
           <span class="panel-icon" aria-hidden="true">＋</span>
         </div>
         <form id="patient-form">
           <div class="input-section">
-            <div class="section-label"><span class="section-index">A</span> DEMOGRAPHICS</div>
+            <div class="section-label"><span class="section-index">A</span> <span data-i18n="demographics">DEMOGRAPHICS</span></div>
             <div class="field-block">
-              <div class="field-heading"><label for="age">Age</label><output id="age-value">50</output></div>
+              <div class="field-heading"><label for="age" data-i18n="age">Age</label><output id="age-value">50</output></div>
               <input id="age" name="age_years" type="range" min="20" max="100" value="50">
-              <div class="range-labels"><span>20 YEARS</span><span>100 YEARS</span></div>
+              <div class="range-labels"><span data-i18n="minAge">20 YEARS</span><span data-i18n="maxAge">100 YEARS</span></div>
             </div>
             <div class="field-block">
-              <div class="field-heading"><span>Sex</span><span class="field-hint">SELECT ONE</span></div>
-              <div class="segmented" role="group" aria-label="Sex">
-                <button class="segment active" type="button" data-group="sex" data-value="0" aria-pressed="true">Female</button>
-                <button class="segment" type="button" data-group="sex" data-value="1" aria-pressed="false">Male</button>
+              <div class="field-heading"><span data-i18n="sex">Sex</span><span class="field-hint" data-i18n="selectOne">SELECT ONE</span></div>
+              <div class="segmented" role="group" aria-label="Sex" data-i18n-aria="sex">
+                <button class="segment active" type="button" data-group="sex" data-value="0" aria-pressed="true" data-i18n="female">Female</button>
+                <button class="segment" type="button" data-group="sex" data-value="1" aria-pressed="false" data-i18n="male">Male</button>
               </div>
             </div>
           </div>
 
           <div class="input-section">
-            <div class="section-label"><span class="section-index">B</span> VITALS</div>
+            <div class="section-label"><span class="section-index">B</span> <span data-i18n="vitals">VITALS</span></div>
             <div class="field-block">
-              <div class="field-heading"><label for="sysBP">Systolic pressure</label><output id="sysBP-value">120 <small>mmHg</small></output></div>
+              <div class="field-heading"><label for="sysBP" data-i18n="sysBp">Systolic Blood Pressure</label><output id="sysBP-value">120 <small>mmHg</small></output></div>
               <input id="sysBP" name="sysBP" type="range" min="90" max="200" value="120">
               <div class="range-labels"><span>90 mmHg</span><span>200 mmHg</span></div>
             </div>
             <div class="field-block">
-              <div class="field-heading"><label for="diaBP">Diastolic pressure</label><output id="diaBP-value">80 <small>mmHg</small></output></div>
+              <div class="field-heading"><label for="diaBP" data-i18n="diaBp">Diastolic Blood Pressure</label><output id="diaBP-value">80 <small>mmHg</small></output></div>
               <input id="diaBP" name="diaBP" type="range" min="60" max="130" value="80">
               <div class="range-labels"><span>60 mmHg</span><span>130 mmHg</span></div>
             </div>
-            <div id="bp-warning" class="inline-warning" hidden>Diastolic pressure should be lower than systolic pressure.</div>
+            <div id="bp-warning" class="inline-warning" data-i18n="bpWarning" hidden>Diastolic pressure should be lower than systolic pressure.</div>
           </div>
 
           <div class="input-section">
-            <div class="section-label"><span class="section-index">C</span> METABOLIC &amp; LIFESTYLE</div>
+            <div class="section-label"><span class="section-index">C</span> <span data-i18n="metabolic">METABOLIC &amp; LIFESTYLE</span></div>
             <div class="field-block">
-              <div class="field-heading"><span>Cholesterol</span><span class="field-hint">CARDIO TRAIN SCALE</span></div>
-              <div class="choice-grid three" role="group" aria-label="Cholesterol level">
-                <button class="choice active" type="button" data-group="chol" data-value="1" aria-pressed="true"><span class="choice-index">01</span> Normal</button>
-                <button class="choice" type="button" data-group="chol" data-value="2" aria-pressed="false"><span class="choice-index">02</span> Elevated</button>
-                <button class="choice" type="button" data-group="chol" data-value="3" aria-pressed="false"><span class="choice-index">03</span> High</button>
+              <div class="field-heading"><span data-i18n="cholesterol">Cholesterol</span><span class="field-hint" data-i18n="cardioScale">CARDIO TRAIN SCALE</span></div>
+              <div class="choice-grid three" role="group" aria-label="Cholesterol level" data-i18n-aria="cholesterol">
+                <button class="choice active" type="button" data-group="chol" data-value="1" aria-pressed="true"><span class="choice-index">01</span> <span data-i18n="normal">Normal</span></button>
+                <button class="choice" type="button" data-group="chol" data-value="2" aria-pressed="false"><span class="choice-index">02</span> <span data-i18n="elevated">Elevated</span></button>
+                <button class="choice" type="button" data-group="chol" data-value="3" aria-pressed="false"><span class="choice-index">03</span> <span data-i18n="high">High</span></button>
               </div>
             </div>
             <div class="field-block">
-              <div class="field-heading"><span>Glucose</span><span class="field-hint">CARDIO TRAIN SCALE</span></div>
-              <div class="choice-grid three" role="group" aria-label="Fasting blood sugar / glucose">
-                <button class="choice active" type="button" data-group="glucose" data-value="1" aria-pressed="true"><span class="choice-index">01</span> Normal</button>
-                <button class="choice" type="button" data-group="glucose" data-value="2" aria-pressed="false"><span class="choice-index">02</span> Elevated</button>
-                <button class="choice" type="button" data-group="glucose" data-value="3" aria-pressed="false"><span class="choice-index">03</span> High</button>
+              <div class="field-heading"><span data-i18n="glucose">Fasting Glucose</span><span class="field-hint" data-i18n="cardioScale">CARDIO TRAIN SCALE</span></div>
+              <div class="choice-grid three" role="group" aria-label="Fasting blood sugar / glucose" data-i18n-aria="glucose">
+                <button class="choice active" type="button" data-group="glucose" data-value="1" aria-pressed="true"><span class="choice-index">01</span> <span data-i18n="normal">Normal</span></button>
+                <button class="choice" type="button" data-group="glucose" data-value="2" aria-pressed="false"><span class="choice-index">02</span> <span data-i18n="elevated">Elevated</span></button>
+                <button class="choice" type="button" data-group="glucose" data-value="3" aria-pressed="false"><span class="choice-index">03</span> <span data-i18n="high">High</span></button>
               </div>
             </div>
             <div class="field-block smoking-row">
-              <div class="field-heading"><span>Smoking status</span><span class="field-hint">CURRENT</span></div>
-              <div class="segmented compact" role="group" aria-label="Smoking status">
-                <button class="segment active" type="button" data-group="smoke" data-value="0" aria-pressed="true">Non-smoker</button>
-                <button class="segment" type="button" data-group="smoke" data-value="1" aria-pressed="false">Smoker</button>
+              <div class="field-heading"><span data-i18n="smoking">Smoking</span><span class="field-hint" data-i18n="current">CURRENT</span></div>
+              <div class="segmented compact" role="group" aria-label="Smoking status" data-i18n-aria="smoking">
+                <button class="segment active" type="button" data-group="smoke" data-value="0" aria-pressed="true" data-i18n="nonSmoker">Non-smoker</button>
+                <button class="segment" type="button" data-group="smoke" data-value="1" aria-pressed="false" data-i18n="smoker">Smoker</button>
               </div>
             </div>
           </div>
-          <button class="assess-button" type="submit"><span>GENERATE RISK PROFILE</span><span class="button-arrow">↗</span></button>
-          <div id="request-status" class="request-status" aria-live="polite">Adjust parameters, then generate your profile.</div>
+          <button class="assess-button" type="submit"><span data-i18n="generateRisk">GENERATE RISK PROFILE</span><span class="button-arrow">↗</span></button>
+          <div id="request-status" class="request-status" aria-live="polite" data-i18n="adjustParameters">Adjust parameters, then generate your profile.</div>
         </form>
       </section>
 
       <section class="glass-panel diagnostics-panel">
         <div class="panel-heading">
           <div>
-            <div class="panel-kicker">02 / PREDICTIVE DIAGNOSTICS</div>
-            <h2>Risk intelligence</h2>
+            <div class="panel-kicker" data-i18n="diagnostics">02 / PREDICTIVE DIAGNOSTICS</div>
+            <h2 data-i18n="riskIntelligence">Risk intelligence</h2>
           </div>
-          <div class="live-label"><span class="status-dot"></span> LIVE ANALYSIS</div>
+          <div class="live-label"><span class="status-dot"></span> <span data-i18n="liveAnalysis">LIVE ANALYSIS</span></div>
         </div>
 
         <div class="gauge-zone">
           <div class="gauge-wrap">
             <svg class="risk-gauge" viewBox="0 0 260 260" role="img" aria-labelledby="gauge-title gauge-desc">
-              <title id="gauge-title">Estimated cardiovascular risk</title>
-              <desc id="gauge-desc">The risk estimate will appear after assessment.</desc>
+              <title id="gauge-title" data-i18n="estimatedRisk">Estimated cardiovascular risk</title>
+              <desc id="gauge-desc" data-i18n="riskEstimatePending">The risk estimate will appear after assessment.</desc>
               <defs>
                 <filter id="gauge-glow" x="-80%" y="-80%" width="260%" height="260%">
                   <feGaussianBlur stdDeviation="5" result="blur"/>
@@ -130,51 +147,92 @@
               <circle class="gauge-progress" id="gauge-progress" cx="130" cy="130" r="102"/>
               <circle class="gauge-inner" cx="130" cy="130" r="82"/>
               <text class="gauge-number" id="gauge-number" x="130" y="129">--%</text>
-              <text class="gauge-caption" x="130" y="156">ESTIMATED RISK</text>
+              <text class="gauge-caption" x="130" y="156" data-i18n="estimatedRiskShort">ESTIMATED RISK</text>
               <text class="gauge-caption subtle" x="130" y="222">0</text>
               <text class="gauge-caption subtle" x="130" y="42">100</text>
             </svg>
-            <div id="tier-badge" class="tier-badge tier-pending"><span class="tier-dot"></span><span id="tier-text">AWAITING ASSESSMENT</span></div>
+            <div id="tier-badge" class="tier-badge tier-pending"><span class="tier-dot"></span><span id="tier-text" data-i18n="awaitingAssessment">AWAITING ASSESSMENT</span></div>
           </div>
-          <div class="scale-legend" aria-label="Risk tier ranges">
-            <span><i class="legend-dot low"></i>LOW <b>&lt;10%</b></span>
-            <span><i class="legend-dot moderate"></i>MODERATE <b>10–20%</b></span>
-            <span><i class="legend-dot high"></i>HIGH <b>20–30%</b></span>
-            <span><i class="legend-dot critical"></i>CRITICAL <b>&gt;30%</b></span>
+          <div class="scale-legend" aria-label="Risk tier ranges" data-i18n-aria="riskRanges">
+            <span><i class="legend-dot low"></i><span data-i18n="lowRisk">LOW RISK</span> <b>&lt;10%</b></span>
+            <span><i class="legend-dot moderate"></i><span data-i18n="moderateRisk">MODERATE RISK</span> <b>10–20%</b></span>
+            <span><i class="legend-dot high"></i><span data-i18n="highRisk">HIGH RISK</span> <b>20–30%</b></span>
+            <span><i class="legend-dot critical"></i><span data-i18n="criticalRisk">CRITICAL RISK</span> <b>&gt;30%</b></span>
           </div>
         </div>
 
         <div class="diagnostic-metrics">
           <article class="metric-tile">
-            <div class="metric-label"><span class="metric-glyph">◉</span> MEAN ARTERIAL PRESSURE</div>
+            <div class="metric-label"><span class="metric-glyph">◉</span> <span data-i18n="meanArterialPressure">MEAN ARTERIAL PRESSURE</span></div>
             <div class="metric-value"><span id="map-value">--</span><small>mmHg</small></div>
-            <div class="metric-foot">Calculated from systolic &amp; diastolic pressure</div>
+            <div class="metric-foot" data-i18n="mapExplanation">Calculated from systolic &amp; diastolic pressure</div>
           </article>
           <article class="metric-tile">
-            <div class="metric-label"><span class="metric-glyph">⌁</span> MODEL CONFIDENCE CONTEXT</div>
+            <div class="metric-label"><span class="metric-glyph">⌁</span> <span data-i18n="modelConfidence">MODEL CONFIDENCE CONTEXT</span></div>
             <div class="metric-value"><span>0.1868</span></div>
-            <div class="metric-foot">Held-out Brier score · lower is better</div>
+            <div class="metric-foot" data-i18n="brierScore">Held-out Brier score · lower is better</div>
           </article>
         </div>
 
         <article class="guidance-card">
           <div class="guidance-icon" aria-hidden="true">✳</div>
           <div>
-            <div class="metric-label">CLINICAL GUIDANCE</div>
-            <p id="clinical-advice">Your personalized educational guidance will appear after assessment.</p>
-            <div class="guidance-foot">Decision support concept · clinician judgment remains essential</div>
+            <div class="metric-label" data-i18n="clinicalGuidance">CLINICAL GUIDANCE</div>
+            <p id="clinical-advice" data-i18n="guidancePending">Your personalized educational guidance will appear after assessment.</p>
+            <div class="guidance-foot" data-i18n="clinicianJudgment">Decision support concept · clinician judgment remains essential</div>
           </div>
         </article>
 
-        <div class="model-note"><span class="note-symbol">i</span><span>Academic demonstration only. This model is not a medical device, diagnosis, or treatment recommendation.</span></div>
+        <div class="model-note"><span class="note-symbol">i</span><span data-i18n="disclaimer">Academic demonstration only. This model is not a medical device, diagnosis, or treatment recommendation.</span></div>
       </section>
     </section>
 
     <footer class="footer">
-      <span>CARDIOVISION <i>•</i> ACADEMIC RESEARCH PROTOTYPE</span>
-      <span>NOT FOR CLINICAL USE <i>•</i> ALWAYS CONSULT A QUALIFIED PROFESSIONAL</span>
+      <span data-i18n="footerPrototype">CARDIOVISION <i>•</i> ACADEMIC RESEARCH PROTOTYPE</span>
+      <span data-i18n="footerMedical">NOT FOR CLINICAL USE <i>•</i> ALWAYS CONSULT A QUALIFIED PROFESSIONAL</span>
     </footer>
   </main>
+  <dialog id="auth-dialog" class="app-dialog" aria-labelledby="auth-title">
+    <div class="dialog-heading">
+      <div><div class="panel-kicker" data-i18n="accountAccess">ACCOUNT ACCESS</div><h2 id="auth-title" data-i18n="navLogin">Login</h2></div>
+      <button class="dialog-close" type="button" data-close-dialog="auth-dialog" aria-label="Close" data-i18n-aria="close">×</button>
+    </div>
+    <div class="auth-tabs" role="tablist">
+      <button id="auth-login-tab" class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-mode="login" data-i18n="navLogin">Login</button>
+      <button id="auth-register-tab" class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-mode="register" data-i18n="navRegister">Register</button>
+    </div>
+    <form id="auth-form">
+      <label class="dialog-label" for="auth-email" data-i18n="email">Email</label>
+      <input class="dialog-input" id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+      <div id="username-field" hidden>
+        <label class="dialog-label" for="auth-username" data-i18n="username">Username</label>
+        <input class="dialog-input" id="auth-username" name="username" type="text" autocomplete="username" minlength="2" maxlength="80">
+      </div>
+      <label class="dialog-label" for="auth-password" data-i18n="password">Password</label>
+      <input class="dialog-input" id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
+      <button id="auth-submit" class="assess-button" type="submit" data-i18n="navLogin">Login</button>
+      <p id="auth-status" class="dialog-status" aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <dialog id="history-dialog" class="app-dialog history-dialog" aria-labelledby="history-title">
+    <div class="dialog-heading">
+      <div><div class="panel-kicker" data-i18n="privateHistory">PRIVATE HEALTH RECORD</div><h2 id="history-title" data-i18n="navHistory">My Health Log</h2></div>
+      <button class="dialog-close" type="button" data-close-dialog="history-dialog" aria-label="Close" data-i18n-aria="close">×</button>
+    </div>
+    <p id="history-status" class="dialog-status" aria-live="polite"></p>
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead><tr>
+          <th data-i18n="dateTime">Date / time</th><th data-i18n="age">Age</th>
+          <th data-i18n="bloodPressure">Blood pressure</th><th>MAP</th>
+          <th data-i18n="predictedRisk">Predicted risk</th><th data-i18n="riskTier">Risk tier</th>
+        </tr></thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+  </dialog>
+  <script src="{{ url_for('static', filename='js/translations.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
 </html>
