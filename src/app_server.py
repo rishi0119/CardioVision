@@ -141,20 +141,129 @@ def risk_category(probability: float) -> tuple[str, str]:
     return "Critical", "Prompt professional assessment is appropriate; this estimate is not a diagnosis."
 
 
-def clinical_advice(map_value: float, systolic: float, diastolic: float, tier: str) -> str:
-    if systolic >= 180 or diastolic >= 120:
-        return "Blood pressure is markedly elevated; seek prompt professional assessment."
-    if tier == "Critical":
-        return "Discuss this risk estimate promptly with a qualified healthcare professional."
-    if map_value > 100:
-        return "Monitor blood pressure closely and discuss the reading with a healthcare professional."
-    if map_value < 70:
-        return "MAP is on the lower side; interpret with symptoms and seek clinical advice if concerned."
-    if tier == "High":
-        return "Consider timely clinical review and ongoing monitoring of cardiovascular risk factors."
-    if tier == "Moderate":
-        return "Review preventive health goals and maintain regular follow-up."
-    return "Continue routine preventive care and periodic blood-pressure monitoring."
+def clinical_analysis(values: dict[str, float], map_value: float, tier: str) -> dict[str, Any]:
+    if map_value > 110:
+        map_status = "markedly_elevated"
+    elif map_value > 100:
+        map_status = "elevated"
+    elif map_value < 70:
+        map_status = "below_reference"
+    else:
+        map_status = "within_reference"
+
+    cholesterol_status = {1: "normal", 2: "elevated", 3: "high"}[int(values["chol"])]
+    glucose_status = {1: "normal", 2: "elevated", 3: "high"}[int(values["glucose"])]
+    factor_assessments: list[dict[str, Any]] = [
+        {
+            "code": "blood_pressure",
+            "assessment_code": map_status,
+            "sys_bp": int(values["sysBP"]),
+            "dia_bp": int(values["diaBP"]),
+            "map_value": round(map_value, 1),
+        },
+        {
+            "code": "age",
+            "assessment_code": "over_50" if values["age_years"] > 50 else "50_or_under",
+            "value": int(values["age_years"]),
+        },
+        {"code": "cholesterol", "assessment_code": cholesterol_status},
+        {"code": "glucose", "assessment_code": glucose_status},
+        {
+            "code": "smoking",
+            "assessment_code": "current" if values["smoke"] == 1 else "not_smoking",
+        },
+    ]
+
+    if map_status in {"markedly_elevated", "elevated", "below_reference"}:
+        primary_driver = factor_assessments[0]
+    elif cholesterol_status != "normal":
+        primary_driver = factor_assessments[2]
+    elif values["age_years"] > 50:
+        primary_driver = factor_assessments[1]
+    else:
+        primary_driver = factor_assessments[0]
+
+    if values["sysBP"] >= 180 or values["diaBP"] >= 120:
+        recommendation_code = "urgent_pressure"
+    else:
+        recommendation_code = f"tier_{tier.lower()}"
+    recommendation_codes = [recommendation_code]
+    if map_status in {"markedly_elevated", "elevated", "below_reference"}:
+        recommendation_codes.append("review_pressure")
+    if values["chol"] > 1:
+        recommendation_codes.append("review_cholesterol")
+    if values["glucose"] > 1:
+        recommendation_codes.append("review_glucose")
+    if values["smoke"] == 1:
+        recommendation_codes.append("smoking_support")
+
+    recommendations = {
+        "urgent_pressure": "Seek prompt professional assessment for the markedly elevated blood-pressure reading.",
+        "tier_critical": "Discuss this model estimate promptly with a qualified healthcare professional; it is not a diagnosis.",
+        "tier_high": "Arrange timely clinical review of cardiovascular risk factors and monitoring.",
+        "tier_moderate": "Review preventive health goals and arrange regular follow-up with a healthcare professional.",
+        "tier_low": "Continue routine preventive care and periodic monitoring.",
+        "review_pressure": "Repeat blood-pressure readings under appropriate conditions and review them with a clinician.",
+        "review_cholesterol": "Discuss cholesterol assessment and management with a healthcare professional.",
+        "review_glucose": "Discuss glucose assessment and any needed follow-up with a healthcare professional.",
+        "smoking_support": "If you smoke, ask a healthcare professional about evidence-based support to quit.",
+    }
+    summary_code = f"patient_summary_{tier.lower()}"
+    patient_explanation = [
+        f"The app places this result in the {tier} category.",
+        (
+            f"Your blood pressure is {int(values['sysBP'])}/{int(values['diaBP'])} mmHg. "
+            f"The average of these readings is {map_value:.1f} mmHg."
+        ),
+        "The app compares all your answers together. It cannot tell that one answer caused this result.",
+    ]
+    if map_status in {"markedly_elevated", "elevated"}:
+        patient_explanation.append(
+            "This average reading is above the usual range shown in the app and is worth discussing with a health professional."
+        )
+    elif map_status == "below_reference":
+        patient_explanation.append(
+            "This average reading is below the usual range shown in the app; discuss it with a health professional if you have symptoms or concerns."
+        )
+    elif tier in {"Low", "Moderate"}:
+        patient_explanation.append(
+            "Your blood pressure reading is within the usual range shown here."
+        )
+    cholesterol_explanations = {
+        "normal": "The cholesterol category you selected is below 200 mg/dL.",
+        "elevated": "The cholesterol category you selected is 200–239 mg/dL.",
+        "high": "The cholesterol category you selected is 240 mg/dL or higher.",
+    }
+    patient_explanation.append(
+        cholesterol_explanations[cholesterol_status]
+        + " This is a selected range, not a measured lab result."
+    )
+    if values["age_years"] > 50:
+        patient_explanation.append(
+            f"Your age ({int(values['age_years'])}) is also included in the estimate."
+        )
+    glucose_explanations = {
+        "normal": "The fasting glucose range you selected is below 100 mg/dL (normal range).",
+        "elevated": "The fasting glucose range you selected is 100–125 mg/dL (prediabetes range).",
+        "high": "The fasting glucose range you selected is at or above 126 mg/dL (diabetes range).",
+    }
+    patient_explanation.append(
+        glucose_explanations[glucose_status]
+        + " This is a selected category, not a measured lab result or a diagnosis; a healthcare professional can interpret an actual fasting glucose test."
+    )
+    if values["smoke"] == 1:
+        patient_explanation.append("You also indicated that you currently smoke.")
+    patient_explanation_text = " ".join(patient_explanation)
+    return {
+        "primary_driver": primary_driver,
+        "contributing_factors": factor_assessments,
+        "patient_explanation": patient_explanation_text,
+        "patient_explanation_code": summary_code,
+        "model_explanation": "This is an estimate from the answers you entered, not a diagnosis. The app cannot identify one exact cause for an individual result.",
+        "recommendation_code": recommendation_code,
+        "recommendation_codes": recommendation_codes,
+        "actionable_recommendation": " ".join(recommendations[code] for code in recommendation_codes),
+    }
 
 
 @app.get("/")
@@ -264,7 +373,6 @@ def get_history():
                     "chol": record.chol,
                     "glucose": record.glucose,
                     "smoke": record.smoke,
-                    "risk_probability": record.risk_probability,
                     "risk_tier": record.risk_tier,
                     "created_at": (
                         record.created_at.replace(tzinfo=timezone.utc)
@@ -306,7 +414,7 @@ def predict():
     scaled_features = SCALER.transform(feature_row)
     probability = float(MODEL.predict_proba(scaled_features)[0, 1])
     tier, tier_description = risk_category(probability)
-    advice = clinical_advice(map_value, values["sysBP"], values["diaBP"], tier)
+    analysis = clinical_analysis(values, map_value, tier)
     if current_user.is_authenticated:
         db.session.add(
             PredictionHistory(
@@ -326,12 +434,10 @@ def predict():
         db.session.commit()
     return jsonify(
         {
-            "probability": probability,
-            "probability_percent": round(probability * 100, 2),
             "risk_tier": tier,
             "tier_description": tier_description,
             "map_value": round(map_value, 1),
-            "clinical_advice": advice,
+            **analysis,
         }
     )
 

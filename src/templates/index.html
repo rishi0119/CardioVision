@@ -95,20 +95,26 @@
           <div class="input-section">
             <div class="section-label"><span class="section-index">C</span> <span data-i18n="metabolic">METABOLIC &amp; LIFESTYLE</span></div>
             <div class="field-block">
-              <div class="field-heading"><span data-i18n="cholesterol">Cholesterol</span><span class="field-hint" data-i18n="cardioScale">CARDIO TRAIN SCALE</span></div>
+              <div class="field-heading">
+                <span data-i18n="cholesterol">Cholesterol</span>
+                <span class="field-hint"><span data-i18n="totalCholesterol">TOTAL CHOLESTEROL</span>
+                  <span class="help-tip" tabindex="0" role="img" data-i18n-aria="cholesterolTooltip" data-i18n-title="cholesterolTooltip" aria-label="These are common total cholesterol lab ranges. Choose the range closest to your lab result.">ⓘ</span>
+                </span>
+              </div>
               <div class="choice-grid three" role="group" aria-label="Cholesterol level" data-i18n-aria="cholesterol">
-                <button class="choice active" type="button" data-group="chol" data-value="1" aria-pressed="true"><span class="choice-index">01</span> <span data-i18n="normal">Normal</span></button>
-                <button class="choice" type="button" data-group="chol" data-value="2" aria-pressed="false"><span class="choice-index">02</span> <span data-i18n="elevated">Elevated</span></button>
-                <button class="choice" type="button" data-group="chol" data-value="3" aria-pressed="false"><span class="choice-index">03</span> <span data-i18n="high">High</span></button>
+                <button class="choice active" type="button" data-group="chol" data-value="1" aria-pressed="true" title="Below 200 mg/dL"><span class="choice-index">01</span> <span data-i18n="cholesterolNormal">Normal (&lt; 200 mg/dL)</span></button>
+                <button class="choice" type="button" data-group="chol" data-value="2" aria-pressed="false" title="200–239 mg/dL"><span class="choice-index">02</span> <span data-i18n="cholesterolElevated">Elevated / Borderline (200–239 mg/dL)</span></button>
+                <button class="choice" type="button" data-group="chol" data-value="3" aria-pressed="false" title="240 mg/dL or higher"><span class="choice-index">03</span> <span data-i18n="cholesterolHigh">High (≥ 240 mg/dL)</span></button>
               </div>
             </div>
             <div class="field-block">
-              <div class="field-heading"><span data-i18n="glucose">Fasting Glucose</span><span class="field-hint" data-i18n="cardioScale">CARDIO TRAIN SCALE</span></div>
+              <div class="field-heading"><span data-i18n="glucose">Fasting Glucose</span><span class="field-hint" data-i18n="fastingPlasmaGlucoseRanges">FASTING PLASMA GLUCOSE · mg/dL</span></div>
               <div class="choice-grid three" role="group" aria-label="Fasting blood sugar / glucose" data-i18n-aria="glucose">
-                <button class="choice active" type="button" data-group="glucose" data-value="1" aria-pressed="true"><span class="choice-index">01</span> <span data-i18n="normal">Normal</span></button>
-                <button class="choice" type="button" data-group="glucose" data-value="2" aria-pressed="false"><span class="choice-index">02</span> <span data-i18n="elevated">Elevated</span></button>
-                <button class="choice" type="button" data-group="glucose" data-value="3" aria-pressed="false"><span class="choice-index">03</span> <span data-i18n="high">High</span></button>
+                <button class="choice active" type="button" data-group="glucose" data-value="1" aria-pressed="true"><span class="choice-index">01</span> <span data-i18n="glucoseNormal">Normal (&lt; 100 mg/dL)</span></button>
+                <button class="choice" type="button" data-group="glucose" data-value="2" aria-pressed="false"><span class="choice-index">02</span> <span data-i18n="glucoseElevated">Elevated / Prediabetes (100 – 125 mg/dL)</span></button>
+                <button class="choice" type="button" data-group="glucose" data-value="3" aria-pressed="false"><span class="choice-index">03</span> <span data-i18n="glucoseHigh">High / Diabetic (≥ 126 mg/dL)</span></button>
               </div>
+              <p class="field-hint" data-i18n="glucoseRangeDisclaimer">Choose the category closest to a fasting lab result. These ranges are educational and do not diagnose diabetes.</p>
             </div>
             <div class="field-block smoking-row">
               <div class="field-heading"><span data-i18n="smoking">Smoking</span><span class="field-hint" data-i18n="current">CURRENT</span></div>
@@ -134,30 +140,11 @@
 
         <div class="gauge-zone">
           <div class="gauge-wrap">
-            <svg class="risk-gauge" viewBox="0 0 260 260" role="img" aria-labelledby="gauge-title gauge-desc">
-              <title id="gauge-title" data-i18n="estimatedRisk">Estimated cardiovascular risk</title>
-              <desc id="gauge-desc" data-i18n="riskEstimatePending">The risk estimate will appear after assessment.</desc>
-              <defs>
-                <filter id="gauge-glow" x="-80%" y="-80%" width="260%" height="260%">
-                  <feGaussianBlur stdDeviation="5" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
-              <circle class="gauge-track" cx="130" cy="130" r="102"/>
-              <circle class="gauge-progress" id="gauge-progress" cx="130" cy="130" r="102"/>
-              <circle class="gauge-inner" cx="130" cy="130" r="82"/>
-              <text class="gauge-number" id="gauge-number" x="130" y="129">--%</text>
-              <text class="gauge-caption" x="130" y="156" data-i18n="estimatedRiskShort">ESTIMATED RISK</text>
-              <text class="gauge-caption subtle" x="130" y="222">0</text>
-              <text class="gauge-caption subtle" x="130" y="42">100</text>
-            </svg>
-            <div id="tier-badge" class="tier-badge tier-pending"><span class="tier-dot"></span><span id="tier-text" data-i18n="awaitingAssessment">AWAITING ASSESSMENT</span></div>
-          </div>
-          <div class="scale-legend" aria-label="Risk tier ranges" data-i18n-aria="riskRanges">
-            <span><i class="legend-dot low"></i><span data-i18n="lowRisk">LOW RISK</span> <b>&lt;10%</b></span>
-            <span><i class="legend-dot moderate"></i><span data-i18n="moderateRisk">MODERATE RISK</span> <b>10–20%</b></span>
-            <span><i class="legend-dot high"></i><span data-i18n="highRisk">HIGH RISK</span> <b>20–30%</b></span>
-            <span><i class="legend-dot critical"></i><span data-i18n="criticalRisk">CRITICAL RISK</span> <b>&gt;30%</b></span>
+            <div class="risk-result" role="status" aria-live="polite">
+              <span class="risk-result-icon" aria-hidden="true">♡</span>
+              <span class="risk-result-label" data-i18n="riskLevel">Your result</span>
+              <div id="tier-badge" class="tier-badge tier-pending"><span class="tier-dot"></span><span id="tier-text" data-i18n="awaitingAssessment">AWAITING ASSESSMENT</span></div>
+            </div>
           </div>
         </div>
 
@@ -167,21 +154,33 @@
             <div class="metric-value"><span id="map-value">--</span><small>mmHg</small></div>
             <div class="metric-foot" data-i18n="mapExplanation">Calculated from systolic &amp; diastolic pressure</div>
           </article>
-          <article class="metric-tile">
-            <div class="metric-label"><span class="metric-glyph">⌁</span> <span data-i18n="modelConfidence">MODEL CONFIDENCE CONTEXT</span></div>
-            <div class="metric-value"><span>0.1868</span></div>
-            <div class="metric-foot" data-i18n="brierScore">Held-out Brier score · lower is better</div>
-          </article>
         </div>
 
-        <article class="guidance-card">
-          <div class="guidance-icon" aria-hidden="true">✳</div>
-          <div>
-            <div class="metric-label" data-i18n="clinicalGuidance">CLINICAL GUIDANCE</div>
-            <p id="clinical-advice" data-i18n="guidancePending">Your personalized educational guidance will appear after assessment.</p>
-            <div class="guidance-foot" data-i18n="clinicianJudgment">Decision support concept · clinician judgment remains essential</div>
+        <section class="explanation-panel" aria-labelledby="explanation-title">
+          <div class="explanation-heading">
+            <span class="guidance-icon" aria-hidden="true">✳</span>
+            <div>
+              <div class="metric-label" data-i18n="clinicalGuidance">CLINICAL GUIDANCE</div>
+              <h3 id="explanation-title" data-i18n="explanationTitle">Clinical diagnostic explanation</h3>
+            </div>
           </div>
-        </article>
+          <div class="explanation-section primary-driver">
+            <div class="explanation-kicker"><span>01</span><h4 data-i18n="primaryRiskDriver">A reading to notice</h4></div>
+            <p id="primary-driver" data-i18n="explanationPending">Run an assessment to see a profile-specific explanation.</p>
+          </div>
+          <div class="explanation-section">
+            <div class="explanation-kicker"><span>02</span><h4 data-i18n="modelDecision">What this result means</h4></div>
+            <p id="model-explanation" data-i18n="modelExplanationPending">The model's decision context will appear after assessment.</p>
+            <ul id="contributing-factors" class="factor-list"></ul>
+          </div>
+          <div class="explanation-section">
+            <div class="explanation-kicker"><span>03</span><h4 data-i18n="personalizedRecommendations">Personalized clinical recommendations</h4></div>
+            <ul id="recommendation-list" class="recommendation-list">
+              <li data-i18n="recommendationPending">Recommendations will appear after assessment.</li>
+            </ul>
+          </div>
+          <div class="guidance-foot" data-i18n="clinicianJudgment">Decision support concept · clinician judgment remains essential</div>
+        </section>
 
         <div class="model-note"><span class="note-symbol">i</span><span data-i18n="disclaimer">Academic demonstration only. This model is not a medical device, diagnosis, or treatment recommendation.</span></div>
       </section>
@@ -226,7 +225,7 @@
         <thead><tr>
           <th data-i18n="dateTime">Date / time</th><th data-i18n="age">Age</th>
           <th data-i18n="bloodPressure">Blood pressure</th><th>MAP</th>
-          <th data-i18n="predictedRisk">Predicted risk</th><th data-i18n="riskTier">Risk tier</th>
+          <th data-i18n="riskTier">Risk tier</th>
         </tr></thead>
         <tbody id="history-body"></tbody>
       </table>

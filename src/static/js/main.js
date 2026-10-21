@@ -5,13 +5,13 @@
   const context = canvas.getContext("2d", { alpha: true });
   const form = document.getElementById("patient-form");
   const statusElement = document.getElementById("request-status");
-  const gaugeProgress = document.getElementById("gauge-progress");
-  const gaugeNumber = document.getElementById("gauge-number");
-  const gaugeDescription = document.getElementById("gauge-desc");
   const tierBadge = document.getElementById("tier-badge");
   const tierText = document.getElementById("tier-text");
   const mapValueElement = document.getElementById("map-value");
-  const adviceElement = document.getElementById("clinical-advice");
+  const primaryDriverElement = document.getElementById("primary-driver");
+  const modelExplanationElement = document.getElementById("model-explanation");
+  const contributingFactorsList = document.getElementById("contributing-factors");
+  const recommendationList = document.getElementById("recommendation-list");
   const ageInput = document.getElementById("age");
   const systolicInput = document.getElementById("sysBP");
   const diastolicInput = document.getElementById("diaBP");
@@ -28,7 +28,7 @@
   let language = "en";
   let authMode = "login";
   let signedInUser = null;
-  const circumference = 2 * Math.PI * 102;
+  let lastPrediction = null;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const values = { sex: 0, chol: 1, glucose: 1, smoke: 0 };
 
@@ -44,9 +44,13 @@
     document.querySelectorAll("[data-i18n-aria]").forEach((element) => {
       element.setAttribute("aria-label", text(element.dataset.i18nAria));
     });
+    document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+      element.setAttribute("title", text(element.dataset.i18nTitle));
+    });
     languageSelect.value = language;
     updateAuthMode();
     if (signedInUser) updateAccountNavigation();
+    if (lastPrediction) renderClinicalExplanation(lastPrediction);
   }
 
   function translatedTier(tier) {
@@ -54,21 +58,56 @@
     return key ? text(key) : tier;
   }
 
-  function translatedAdvice(advice) {
-    const adviceKeys = {
-      "Continue routine preventive care and monitoring.": "adviceRoutine",
-      "Review the overall risk profile with a healthcare professional.": "adviceModerate",
-      "Consider timely clinical review of cardiovascular risk factors.": "adviceHigh",
-      "Prompt professional assessment is appropriate; this estimate is not a diagnosis.": "adviceCritical",
-      "Blood pressure is markedly elevated; seek prompt professional assessment.": "adviceBp",
-      "Discuss this risk estimate promptly with a qualified healthcare professional.": "adviceDiscuss",
-      "Monitor blood pressure closely and discuss the reading with a healthcare professional.": "adviceMapHigh",
-      "MAP is on the lower side; interpret with symptoms and seek clinical advice if concerned.": "adviceMapLow",
-      "Consider timely clinical review and ongoing monitoring of cardiovascular risk factors.": "adviceHighReview",
-      "Review preventive health goals and maintain regular follow-up.": "adviceModerateReview",
-      "Continue routine preventive care and periodic blood-pressure monitoring.": "adviceRoutineReview",
+  function interpolate(template, values) {
+    return template.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
+  }
+
+  function featureLabel(code) {
+    const keys = {
+      blood_pressure: "factorBloodPressureLabel",
+      age: "factorAgeLabel",
+      cholesterol: "factorCholesterolLabel",
+      glucose: "factorGlucoseLabel",
+      smoking: "factorSmokingLabel",
     };
-    return adviceKeys[advice] ? text(adviceKeys[advice]) : advice;
+    return text(keys[code] || code);
+  }
+
+  function factorAssessmentText(factor) {
+    const key = `factor_${factor.code}_${factor.assessment_code}`;
+    return interpolate(text(key), {
+      value: factor.value,
+      sys: factor.sys_bp,
+      dia: factor.dia_bp,
+      map: Number(factor.map_value).toFixed(1),
+    });
+  }
+
+  function renderClinicalExplanation(result) {
+    const primary = result.primary_driver;
+    if (!primary) return;
+    primaryDriverElement.textContent = `${featureLabel(primary.code)}: ${factorAssessmentText(primary)}`;
+
+    modelExplanationElement.textContent = text(`patient_summary_${result.risk_tier.toLowerCase()}`);
+
+    const contributingItems = (result.contributing_factors || [])
+      .filter((factor) => (
+        factor.code !== primary.code
+        || factor.assessment_code !== primary.assessment_code
+      ))
+      .map((factor) => {
+        const item = document.createElement("li");
+        item.textContent = `${featureLabel(factor.code)}: ${factorAssessmentText(factor)}`;
+        return item;
+      });
+    contributingFactorsList.replaceChildren(...contributingItems);
+
+    const recommendations = (result.recommendation_codes || []).map((code) => {
+      const item = document.createElement("li");
+      item.textContent = text(`recommendation_${code}`);
+      return item;
+    });
+    recommendationList.replaceChildren(...recommendations);
   }
 
   function updateAuthMode() {
@@ -151,7 +190,6 @@
         String(record.age),
         `${record.sys_bp}/${record.dia_bp} mmHg`,
         Number(record.map_val).toFixed(1),
-        `${(record.risk_probability * 100).toFixed(1)}%`,
       ];
       cells.forEach((value) => {
         const cell = document.createElement("td");
@@ -254,9 +292,6 @@
     updateAccountNavigation();
   });
 
-  gaugeProgress.style.strokeDasharray = String(circumference);
-  gaugeProgress.style.strokeDashoffset = String(circumference);
-
   function updateRangeFill(input) {
     const percent = ((Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min))) * 100;
     input.style.background = `linear-gradient(90deg, #00f0ff 0%, #0072ff ${percent * 0.5}%, rgba(104,128,158,.25) ${percent}%)`;
@@ -293,27 +328,12 @@
   }
 
   function renderPrediction(result) {
-    const probabilityPercent = Math.max(0, Math.min(100, result.probability * 100));
-    const offset = circumference * (1 - probabilityPercent / 100);
-    const tierColors = {
-      Low: "#00e58a",
-      Moderate: "#f6d64a",
-      High: "#ff9d45",
-      Critical: "#ff4c67",
-    };
-    const color = tierColors[result.risk_tier] || "#00f0ff";
-
-    gaugeProgress.style.strokeDashoffset = String(offset);
-    gaugeProgress.style.stroke = color;
-    gaugeNumber.textContent = `${probabilityPercent.toFixed(1)}%`;
+    lastPrediction = result;
     const tier = translatedTier(result.risk_tier);
-    gaugeDescription.textContent = text("riskEstimate")
-      .replace("{percent}", probabilityPercent.toFixed(1))
-      .replace("{tier}", tier);
     tierBadge.className = `tier-badge ${tierClass(result.risk_tier)}`;
     tierText.textContent = `${tier.toLocaleUpperCase()} ${text("riskTier").toLocaleUpperCase()}`;
     mapValueElement.textContent = Number(result.map_value).toFixed(1);
-    adviceElement.textContent = translatedAdvice(result.clinical_advice);
+    renderClinicalExplanation(result);
     statusElement.textContent = text("predictionDone");
     statusElement.classList.remove("error");
   }
